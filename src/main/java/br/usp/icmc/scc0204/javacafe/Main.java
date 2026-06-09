@@ -8,12 +8,12 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         try {
-            // 1. Teste de Carga (DataStorage)
+            // Teste de Carga (DataStorage)
             System.out.println("Carregando estoque...");
             List<Product> estoque = DataStorage.loadInventory();
             System.out.println("Produtos carregados: " + estoque.size());
 
-            // 2. Teste de Sistema (CafeSystem)
+            // Teste de Sistema (CafeSystem)
             CafeSystem sistema = new CafeSystem();
             
             // Adicionando um produto de teste se a lista estiver vazia
@@ -24,7 +24,7 @@ public class Main {
                 System.out.println("Produto criado e salvo no CSV!");
             }
 
-            // 3. Teste de Ordem
+            // Teste de Ordem
             Order pedido = sistema.createOrder();
             sistema.addItemToOrder(pedido, sistema.getAllProducts().get(0), 1);
             

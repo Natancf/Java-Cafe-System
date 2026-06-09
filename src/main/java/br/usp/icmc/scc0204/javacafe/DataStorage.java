@@ -13,12 +13,12 @@ public class DataStorage {
     private static final String VENDAS_ITENS_PATH = "data/vendas_itens.csv"; // Novo arquivo relacional
 
 
-    // Estoque
+    // Stock
     
     public static void saveInventory(List<Product> products) throws IOException {
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(ESTOQUE_PATH))) {
-            // Escreve o cabeçalho no arquivo
+            // Write the header to the file.
             writer.println("id,nome,preco,qtd");
             
             for (Product p : products) {
@@ -33,7 +33,7 @@ public class DataStorage {
         if (!file.exists()) return products;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            // Lê e descarta a primeira linha (cabeçalho) antes do loop
+            // Reads and discards the first line (header) before the loop.
             String header = reader.readLine(); 
             
             String line;
@@ -46,19 +46,19 @@ public class DataStorage {
         return products;
     }
 
-    // Vendas
+    // Sales
     
     public static void appendOrder(Order order, String paymentMethod) throws IOException {
         new File("data").mkdirs();
 
-        // Verificação se os arquivos já existem para decidir se escreve o cabeçalho
+        // Checking if the files already exist to decide whether to write the header.
         File arquivoVendas = new File(VENDAS_PATH);
         boolean precisaHeaderVendas = !arquivoVendas.exists() || arquivoVendas.length() == 0;
 
         File arquivoItens = new File(VENDAS_ITENS_PATH);
         boolean precisaHeaderItens = !arquivoItens.exists() || arquivoItens.length() == 0;
 
-        // Gravando no arquivo principal (vendas.csv)
+        // Saving to the main file (sales.csv)
         try (PrintWriter writerVendas = new PrintWriter(new FileWriter(arquivoVendas, true))) {
             if (precisaHeaderVendas) {
                 writerVendas.println("id_pedido,numero_pedido,total,metodo_pagamento");
@@ -67,7 +67,7 @@ public class DataStorage {
                                  order.getTotal() + "," + paymentMethod);
         }
 
-        // Grava os itens associados ao pedido (vendas_itens.csv)
+        // Saves the items associated with the order (sales_items.csv)
         try (PrintWriter writerItens = new PrintWriter(new FileWriter(arquivoItens, true))) {
             if (precisaHeaderItens) {
                 writerItens.println("id_pedido,id_produto,quantidade,preco_unitario");
@@ -86,7 +86,7 @@ public class DataStorage {
     }
 
 
-    // Busca o último número de pedido pulando o cabeçalho
+    // Search for the last order number, skipping the header.
     public static int getLastOrderNumber() throws IOException {
         int lastNumber = 0;
         File file = new File(VENDAS_PATH);
