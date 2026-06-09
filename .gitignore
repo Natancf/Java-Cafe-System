@@ -1,4 +1,10 @@
 *.class
 target/
 .idea/
+# Ignora todos os arquivos CSV dentro da pasta data
+data/*.csv
+
+# Ignora pastas de compilação da IDE
+bin/
+out/
 .vscode/

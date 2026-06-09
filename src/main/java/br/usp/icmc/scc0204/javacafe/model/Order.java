@@ -6,11 +6,13 @@ import java.util.Map;
 public class Order {
     
     private String orderId;
-    private Map<Product, Integer> items;
+    private int orderNumber;
+    private Map<Product, Integer> items; // Armazena produto e quantidade do pedido
     private boolean finalized;
 
-    public Order(String orderId) {
+    public Order(String orderId, int orderNumber) {
         this.orderId = orderId;
+        this.orderNumber = orderNumber;
         this.items = new HashMap<>();
         this.finalized = false;
     }
@@ -43,6 +45,10 @@ public class Order {
             subtotal += entry.getKey().getPrice() * entry.getValue();
         }
         return subtotal;
+    }
+
+    public int getOrderNumber() {
+        return orderNumber;
     }
 
     public double getTax() {
