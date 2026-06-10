@@ -27,6 +27,12 @@ public class CafeController {
         cafeSystem.addItemToOrder(this.currentOrder, product, quantity);
     }
 
+    public void removeItemFromCurrentOrder(Product product, int quantity) {
+        if (this.currentOrder != null) {
+            cafeSystem.removeItemFromOrder(this.currentOrder, product, quantity);
+        }
+    }
+
     public String finalizeCurrentOrder(PaymentMethod method) throws InvalidPaymentException, OutOfStockException {
         if (this.currentOrder == null) {
             throw new IllegalStateException("Não há nenhum pedido em andamento para finalizar.");
