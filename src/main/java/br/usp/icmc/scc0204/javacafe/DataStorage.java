@@ -10,7 +10,7 @@ import java.util.Map;
 public class DataStorage {
     private static final String ESTOQUE_PATH = "data/estoque.csv";
     private static final String VENDAS_PATH = "data/vendas.csv";
-    private static final String VENDAS_ITENS_PATH = "data/vendas_itens.csv"; // Novo arquivo relacional
+    private static final String VENDAS_ITENS_PATH = "data/vendas_itens.csv";
 
 
     // Stock
