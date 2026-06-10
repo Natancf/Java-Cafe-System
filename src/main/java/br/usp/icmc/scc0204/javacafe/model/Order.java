@@ -18,19 +18,19 @@ public class Order {
     }
 
     public void addItem(Product product, int quantity) {
-        // Se o produto já existe no pedido, soma a quantidade. Se não, adiciona.
+        // If the product already exists in the order, add the quantity. Otherwise, add it.
         this.items.put(product, this.items.getOrDefault(product, 0) + quantity);
     }
 
     public void removeItem(Product product, int quantity) {
-        // Verificação de existência
+        // Existence check
         if (this.items.containsKey(product)) {
             
-            // Extração e cálculo
+            // Extraction and calculation
             int currentQuantity = this.items.get(product);
             int newQuantity = currentQuantity - quantity;
     
-            // Remocao ou atualizacao da quantidade
+            // Quantity removal or update
             if (newQuantity <= 0) {
                 this.items.remove(product);
             } else {
@@ -52,7 +52,7 @@ public class Order {
     }
 
     public double getTax() {
-        // Exemplo: 10% de taxa
+        // Example: 10% Tax
         return getSubtotal() * 0.10; 
     }
 
