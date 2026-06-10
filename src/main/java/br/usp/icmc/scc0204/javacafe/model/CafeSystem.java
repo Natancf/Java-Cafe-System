@@ -48,6 +48,22 @@ public class CafeSystem implements CafeSystemContract {
     }
 
     @Override
+    public void removeItemFromOrder(Order order, Product product, int quantityToRemove) {
+        // Current cart
+        Map<Product, Integer> items = order.getItems();
+
+        if (items.containsKey(product)) {
+            int currentQuantity = items.get(product);
+
+            if (quantityToRemove >= currentQuantity) {
+                items.remove(product);
+            } else {
+                items.put(product, currentQuantity - quantityToRemove);
+            }
+        }
+    }
+
+    @Override
     public void finalizeOrder(Order order, PaymentMethod paymentMethod) throws InvalidPaymentException, OutOfStockException {
         for (Map.Entry<Product, Integer> entry : order.getItems().entrySet()) {
             Product product = entry.getKey();
@@ -91,20 +107,32 @@ public class CafeSystem implements CafeSystemContract {
 
         return sb.toString();
     }
+
+    @Override
+    public List<Product> getLowStockProducts(int threshold) {
+        List<Product> lowStockList = new ArrayList<>();
+
+        for (Product product : inventory) {
+            
+            if (product.getStockQuantity() < threshold) {
+                lowStockList.add(product);
+            }
+        }
+
+        return lowStockList;
+    }
     
     @Override public double calculateTotal(Order order) { return order.getTotal(); }
     @Override public void addProduct(Product product) { inventory.add(product); }
     @Override public List<Product> getAllProducts() { return inventory; }
     
-    // Métodos obrigatórios do contrato que ainda precisam de lógica futura
-    @Override public void removeItemFromOrder(Order order, Product product, int quantity) {}
+
     @Override public double calculateSubtotal(Order order) { return order.getSubtotal(); }
     @Override public double calculateTax(Order order) { return order.getTax(); }
+
+
     @Override public void updateStock(String productId, int newQuantity) {}
-    @Override public List<Product> getLowStockProducts(int threshold) { return new ArrayList<>(); }
     @Override public Report getDailyReport() { return null; }
     @Override public Report getWeeklyReport() { return null; }
     @Override public Report getMonthlyReport() { return null; }
-    @Override public void saveData() {}
-    @Override public void loadData() {}
 }

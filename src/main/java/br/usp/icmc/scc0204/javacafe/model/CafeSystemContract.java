@@ -49,9 +49,4 @@ public interface CafeSystemContract {
     
     Report getMonthlyReport();
 
-    // Data Persistence
-    
-    void saveData();
-    
-    void loadData();
 }
