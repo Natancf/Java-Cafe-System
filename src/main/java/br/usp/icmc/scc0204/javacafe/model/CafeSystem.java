@@ -44,6 +44,10 @@ public class CafeSystem implements CafeSystemContract {
 
     @Override
     public void addItemToOrder(Order order, Product product, int quantity) throws OutOfStockException {
+        if (product.getStockQuantity() < quantity) {
+            throw new OutOfStockException("Estoque insuficiente para o produto: " + product.getName());
+        }
+
         order.addItem(product, quantity);
     }
 
@@ -64,7 +68,12 @@ public class CafeSystem implements CafeSystemContract {
     }
 
     @Override
-    public void finalizeOrder(Order order, PaymentMethod paymentMethod) throws InvalidPaymentException, OutOfStockException {
+    public void finalizeOrder(Order order, PaymentMethod paymentMethod) throws InvalidPaymentException, OutOfStockException, EmptyOrderException{
+
+        if (order.getItems().isEmpty()) {
+            throw new EmptyOrderException("Cannot finalize an empty order.");
+        }
+
         for (Map.Entry<Product, Integer> entry : order.getItems().entrySet()) {
             Product product = entry.getKey();
             int qty = entry.getValue();
