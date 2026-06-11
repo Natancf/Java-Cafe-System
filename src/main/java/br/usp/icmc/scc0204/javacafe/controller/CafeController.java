@@ -60,4 +60,8 @@ public class CafeController {
     public void registerNewProduct(Product product) {
         cafeSystem.addProduct(product);
     }
+
+    public CafeSystemContract getCafeSystem() {
+        return this.cafeSystem;
+    }
 }

@@ -165,58 +165,88 @@ public class CafeSystem implements CafeSystemContract {
         return generateGenericReport();
     }
 
+    /**
+     * Generates a complete report with revenue, transaction count, top products,
+     * and detailed sales quantities.
+     */
     private Report generateGenericReport() {
         double totalRevenue = 0;
         int transactionCount = 0;
-        Map<String, Integer> productSales = new java.util.HashMap<>();
+        Map<String, Integer> productSalesCount = new java.util.HashMap<>();
 
+        // Read sales data to calculate revenue and transaction count
         try (BufferedReader reader = new BufferedReader(new FileReader("data/vendas.csv"))) {
-            reader.readLine(); // reads the header
+            String header = reader.readLine(); // Skip header
+            if (header == null) {
+                System.err.println("Vendas file is empty or has no header.");
+                return new Report(0, 0, new java.util.ArrayList<>(), new java.util.HashMap<>());
+            }
 
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.trim().isEmpty()) continue;
 
                 String[] parts = line.split(",");
-                totalRevenue += Double.parseDouble(parts[2]);
-                transactionCount++;
+                if (parts.length < 3) continue;
+                
+                try {
+                    totalRevenue += Double.parseDouble(parts[2]);
+                    transactionCount++;
+                } catch (NumberFormatException e) {
+                    System.err.println("Error parsing revenue: " + parts[2]);
+                }
             }
         } catch (IOException e) {
-            System.err.println("Erro ao ler vendas.");
+            System.err.println("Error reading sales file: " + e.getMessage());
+            return new Report(0, 0, new java.util.ArrayList<>(), new java.util.HashMap<>());
         }
 
-        // Reads the sold items to calculate top products
+        // Read sold items to calculate product sales quantities
         try (BufferedReader reader = new BufferedReader(new FileReader("data/vendas_itens.csv"))) {
-            reader.readLine(); // header
+            String header = reader.readLine(); // Skip header
+            if (header == null) {
+                System.err.println("Vendas itens file is empty or has no header.");
+                return new Report(totalRevenue, transactionCount, new java.util.ArrayList<>(), productSalesCount);
+            }
 
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.trim().isEmpty()) continue;
 
                 String[] parts = line.split(",");
-                String productId = parts[1];
-                int qty = Integer.parseInt(parts[2]);
-
-                productSales.put(productId, productSales.getOrDefault(productId, 0) + qty);
+                if (parts.length < 3) continue;
+                
+                try {
+                    String productId = parts[1].trim();
+                    int quantity = Integer.parseInt(parts[2].trim());
+                    
+                    productSalesCount.put(productId, 
+                        productSalesCount.getOrDefault(productId, 0) + quantity);
+                } catch (NumberFormatException e) {
+                    System.err.println("Error parsing quantity: " + parts[2]);
+                }
             }
         } catch (IOException e) {
-            System.err.println("Failed to read sold items.");
+            System.err.println("Error reading sold items file: " + e.getMessage());
+            return new Report(totalRevenue, transactionCount, new java.util.ArrayList<>(), productSalesCount);
         }
 
-        // Top 3 products based on quantity sold
-        List<Product> topProducts = new ArrayList<>();
-
-        productSales.entrySet().stream()
+        // Calculate top 3 products based on quantity sold
+        List<Product> topProducts = new java.util.ArrayList<>();
+        
+        // Sort products by sales count and get top 3
+        productSalesCount.entrySet().stream()
             .sorted((a, b) -> b.getValue() - a.getValue())
             .limit(3)
             .forEach(entry -> {
                 for (Product p : inventory) {
                     if (p.getId().equals(entry.getKey())) {
                         topProducts.add(p);
+                        break;
                     }
                 }
             });
 
-        return new Report(totalRevenue, transactionCount, topProducts);
+        return new Report(totalRevenue, transactionCount, topProducts, productSalesCount);
     }
 }
