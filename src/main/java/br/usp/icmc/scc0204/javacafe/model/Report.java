@@ -8,10 +8,10 @@ import java.util.Map;
  */
 public class Report {
     
-    private double totalRevenue;
-    private int transactionCount;
-    private List<Product> topThreeItems;
-    private Map<String, Integer> productSalesCount; // Product ID -> Quantity sold
+    private final double totalRevenue;
+    private final int transactionCount;
+    private final List<Product> topThreeItems;
+    private final Map<String, Integer> productSalesCount;
 
     public Report(double totalRevenue, int transactionCount, 
                   List<Product> topThreeItems, Map<String, Integer> productSalesCount) {
@@ -21,22 +21,12 @@ public class Report {
         this.productSalesCount = productSalesCount;
     }
 
-    public double getTotalRevenue() { 
-        return totalRevenue; 
-    }
-    
-    public int getTransactionCount() { 
-        return transactionCount; 
-    }
-    
-    public List<Product> getTopThreeItems() { 
-        return topThreeItems; 
-    }
+    public double getTotalRevenue() { return totalRevenue; }
+    public int getTransactionCount() { return transactionCount; }
+    public List<Product> getTopThreeItems() { return topThreeItems; }
     
     /**
      * Gets the quantity sold for a specific product.
-     * @param product The product
-     * @return Quantity sold, or 0 if not found
      */
     public int getProductSalesCount(Product product) {
         if (product == null || productSalesCount == null) {

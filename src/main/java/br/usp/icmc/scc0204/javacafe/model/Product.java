@@ -2,12 +2,16 @@ package main.java.br.usp.icmc.scc0204.javacafe.model;
 
 import main.java.br.usp.icmc.scc0204.javacafe.exceptions.OutOfStockException;
 
+/**
+ * Represents a product in the Java Café inventory system.
+ */
 public class Product {
     
-    private String id;
+    private final String id;  // Immutable - once set, cannot change
     private String name;
     private double price;
     private int stockQuantity;
+    private int lowStockThreshold = 5;
 
     public Product(String id, String name, double price, int stockQuantity) {
         this.id = id;
@@ -16,40 +20,33 @@ public class Product {
         this.stockQuantity = stockQuantity;
     }
 
-    public String getId() { 
-        return id; 
-    }
-    public String getName() { 
-        return name;
-    } 
-    public double getPrice() { 
-        return price; 
-    }
-    public int getStockQuantity() { 
-        return stockQuantity; 
-    }
+    // Getters
+    public String getId() { return id; }
+    public String getName() { return name; }
+    public double getPrice() { return price; }
+    public int getStockQuantity() { return stockQuantity; }
+    public int getLowStockThreshold() { return lowStockThreshold; }
+    
+    // Setters (except for id - it cannot change)
+    public void setName(String name) { this.name = name; }
+    public void setPrice(double price) { this.price = price; }
+    public void setStockQuantity(int quantity) { this.stockQuantity = quantity; }
+    public void setLowStockThreshold(int threshold) { this.lowStockThreshold = threshold; }
 
-    public void setStockQuantity(int quantity) {
-        this.stockQuantity = quantity;
-    }
-
+    /**
+     * Decreases stock by the specified quantity.
+     * @throws OutOfStockException if insufficient stock
+     */
     public void decreaseStock(int quantity) throws OutOfStockException {
         if (quantity > this.stockQuantity) {
-            throw new OutOfStockException("Estoque insuficiente para o produto: " + this.name);
+            throw new OutOfStockException("Insufficient stock for: " + this.name);
         }
         this.stockQuantity -= quantity;
     }
 
-    private int lowStockThreshold = 5; // Customizable default limit
-
-    public int getLowStockThreshold() {
-        return this.lowStockThreshold;
-    }
-
-    public void setLowStockThreshold(int threshold) {
-        this.lowStockThreshold = threshold;
-    }
-
+    /**
+     * Returns true if stock is below or equal to the low stock threshold.
+     */
     public boolean isStockLow() {
         return this.stockQuantity <= this.lowStockThreshold;
     }

@@ -6,13 +6,12 @@ import main.java.br.usp.icmc.scc0204.javacafe.exceptions.*;
 
 /**
  * Main contract for the Java Café Point of Sale System.
- * Defines the core operations for Order Processing, Inventory Management,
- * Sales Reporting, and Data Persistence.
+ * Defines core operations for Order Processing, Inventory Management,
+ * and Sales Reporting.
  */
-
 public interface CafeSystemContract {
 
-    // Order Processing
+    // ==================== ORDER PROCESSING ====================
     
     Order createOrder();
     
@@ -26,11 +25,12 @@ public interface CafeSystemContract {
     
     double calculateTotal(Order order);
 
-    void finalizeOrder(Order order, PaymentMethod paymentMethod) throws InvalidPaymentException, OutOfStockException, EmptyOrderException;
+    void finalizeOrder(Order order, PaymentMethod paymentMethod) 
+            throws InvalidPaymentException, OutOfStockException, EmptyOrderException;
     
     String generateReceipt(Order order);
 
-    // Inventory Management
+    // ==================== INVENTORY MANAGEMENT ====================
     
     void addProduct(Product product);
     
@@ -40,12 +40,11 @@ public interface CafeSystemContract {
     
     List<Product> getLowStockProducts(int threshold);
 
-    // Sales Reporting
+    // ==================== SALES REPORTING ====================
     
     Report getDailyReport();
     
     Report getWeeklyReport();
     
     Report getMonthlyReport();
-
 }
