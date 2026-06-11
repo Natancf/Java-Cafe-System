@@ -17,11 +17,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Inventory Management Panel for Java Café POS System.
- * Allows staff to view products, update stock levels, and add new products.
+ * Allows staff to view products, update stock levels, add new products, and edit existing ones.
  * Displays warning when stock falls below configurable threshold.
  */
 public class InventoryPanel extends JPanel {
@@ -39,15 +38,19 @@ public class InventoryPanel extends JPanel {
     private JLabel lblLowStockWarning;
     private JSpinner spinnerThreshold;
     
-    // Dialog components
-    private JDialog addProductDialog;
+    // Dialog components (Shared for Add and Edit actions)
+    private JDialog productDialog;
     private JTextField txtProductId;
     private JTextField txtProductName;
     private JTextField txtProductPrice;
     private JTextField txtProductStock;
     private JLabel lblImagePreview;
     private JLabel lblImagePath;
+    private JButton btnSaveProduct;
     private File selectedImageFile;
+    
+    // State control flag
+    private boolean isEditMode = false;
     
     // Listener for inventory updates
     private PropertyChangeListener inventoryListener;
@@ -83,9 +86,7 @@ public class InventoryPanel extends JPanel {
     /**
      * Generates a unique product ID following the pattern "PROD-X".
      * Where X is a sequential number based on existing products.
-     * Examples: PROD-1, PROD-2, PROD-7, PROD-15
-     * 
-     * @return A unique product ID (e.g., "PROD-7")
+     * * @return A unique product ID (e.g., "PROD-7")
      */
     private String generateProductId() {
         List<Product> products = controller.getAvailableProducts();
@@ -100,21 +101,17 @@ public class InventoryPanel extends JPanel {
         for (Product p : products) {
             String id = p.getId();
             
-            // Check if ID follows the "PROD-X" pattern
             if (id != null && id.startsWith(prefix)) {
                 try {
-                    // Extract number after "PROD-"
                     String numberPart = id.substring(prefix.length());
                     int num = Integer.parseInt(numberPart);
                     if (num > maxNumber) {
                         maxNumber = num;
                     }
                 } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
-                    // If ID doesn't follow the pattern, skip it
                     System.err.println("Skipping non-standard ID: " + id);
                 }
             } else if (id != null) {
-                // Try to extract any number from non-standard IDs as fallback
                 try {
                     String numberPart = id.replaceAll("[^0-9]", "");
                     if (!numberPart.isEmpty()) {
@@ -129,7 +126,6 @@ public class InventoryPanel extends JPanel {
             }
         }
         
-        // Generate next sequential number
         int nextNumber = maxNumber + 1;
         return prefix + nextNumber;
     }
@@ -153,7 +149,7 @@ public class InventoryPanel extends JPanel {
      * Initializes all UI components.
      */
     private void initializeComponents() {
-        // Top panel: Controls (threshold and add button)
+        // Top panel: Controls (threshold, add and edit buttons)
         JPanel topPanel = createTopPanel();
         add(topPanel, BorderLayout.NORTH);
         
@@ -165,12 +161,12 @@ public class InventoryPanel extends JPanel {
         JPanel bottomPanel = createBottomPanel();
         add(bottomPanel, BorderLayout.SOUTH);
         
-        // Initialize add product dialog
-        createAddProductDialog();
+        // Initialize the shared product dialog
+        createProductDialog();
     }
     
     /**
-     * Creates the top panel with threshold control and add button.
+     * Creates the top panel with threshold control and action buttons.
      */
     private JPanel createTopPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -187,14 +183,22 @@ public class InventoryPanel extends JPanel {
         thresholdPanel.add(Box.createHorizontalStrut(20));
         thresholdPanel.add(new JLabel("(Stock ≤ threshold = Warning)"));
         
-        // Right side: Add product button
+        // Right side: Action buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        
         JButton btnAddProduct = new JButton("+ Add New Product");
         btnAddProduct.setBackground(new Color(46, 204, 113));
         btnAddProduct.setForeground(Color.WHITE);
         btnAddProduct.setFocusPainted(false);
-        btnAddProduct.addActionListener(e -> showAddProductDialog());
+        btnAddProduct.addActionListener(e -> showProductForm(null));
         buttonPanel.add(btnAddProduct);
+        
+        JButton btnEditProduct = new JButton("✏ Edit Product");
+        btnEditProduct.setBackground(new Color(52, 152, 219));
+        btnEditProduct.setForeground(Color.WHITE);
+        btnEditProduct.setFocusPainted(false);
+        btnEditProduct.addActionListener(e -> handleEditAction());
+        buttonPanel.add(btnEditProduct);
         
         JButton btnRefresh = new JButton("🔄 Refresh");
         btnRefresh.addActionListener(e -> {
@@ -210,13 +214,40 @@ public class InventoryPanel extends JPanel {
     }
     
     /**
+     * Checks selection and prepares data to open the dialog in Edit Mode.
+     */
+    private void handleEditAction() {
+        int selectedRow = inventoryTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this,
+                    "Please select a product from the table to edit.",
+                    "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        String productId = (String) inventoryModel.getValueAt(selectedRow, 0);
+        Product productToEdit = null;
+        
+        // Find the selected product instance
+        for (Product p : controller.getAvailableProducts()) {
+            if (p.getId().equals(productId)) {
+                productToEdit = p;
+                break;
+            }
+        }
+        
+        if (productToEdit != null) {
+            showProductForm(productToEdit);
+        }
+    }
+    
+    /**
      * Creates the inventory table panel.
      */
     private JPanel createInventoryTablePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Product Inventory"));
         
-        // Table columns
         String[] columns = {"ID", "Product Name", "Price (R$)", "Stock", "Status"};
         inventoryModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -229,17 +260,15 @@ public class InventoryPanel extends JPanel {
         inventoryTable.setRowHeight(28);
         inventoryTable.getTableHeader().setReorderingAllowed(false);
         
-        // Set column widths
         inventoryTable.getColumnModel().getColumn(0).setPreferredWidth(80);
         inventoryTable.getColumnModel().getColumn(1).setPreferredWidth(180);
         inventoryTable.getColumnModel().getColumn(2).setPreferredWidth(100);
         inventoryTable.getColumnModel().getColumn(3).setPreferredWidth(80);
         inventoryTable.getColumnModel().getColumn(4).setPreferredWidth(100);
         
-        // Custom renderer for status column
         inventoryTable.getColumnModel().getColumn(4).setCellRenderer(new StatusCellRenderer());
         
-        // Handle stock updates when user edits the stock column
+        // Handle inline stock updates
         inventoryTable.getModel().addTableModelListener(e -> {
             if (e.getColumn() == 3 && e.getFirstRow() >= 0) {
                 int row = e.getFirstRow();
@@ -268,8 +297,7 @@ public class InventoryPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(inventoryTable);
         panel.add(scrollPane, BorderLayout.CENTER);
         
-        // Help text
-        JLabel lblHelp = new JLabel("Tip: Double-click the Stock column to edit stock quantity.");
+        JLabel lblHelp = new JLabel("Tip: Select a row and click 'Edit Product', or double-click the Stock column to edit stock directly.");
         lblHelp.setFont(new Font("Arial", Font.ITALIC, 10));
         lblHelp.setForeground(Color.GRAY);
         panel.add(lblHelp, BorderLayout.SOUTH);
@@ -296,8 +324,7 @@ public class InventoryPanel extends JPanel {
         
         JTextArea txtHelp = new JTextArea(
             "• Products with stock below the threshold will appear with a warning status.\n" +
-            "• Double-click the Stock column to update inventory levels.\n" +
-            "• Use 'Add New Product' to expand your menu."
+            "• Use 'Add New Product' to expand your menu or 'Edit Product' to change existing values."
         );
         txtHelp.setEditable(false);
         txtHelp.setBackground(null);
@@ -311,22 +338,21 @@ public class InventoryPanel extends JPanel {
     }
     
     /**
-     * Creates the dialog for adding new products with image support.
+     * Creates the shared dialog layout used for both adding and editing products.
      */
-    private void createAddProductDialog() {
-        addProductDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Add New Product", true);
-        addProductDialog.setLayout(new BorderLayout(10, 10));
-        addProductDialog.setSize(500, 550);
-        addProductDialog.setLocationRelativeTo(this);
+    private void createProductDialog() {
+        productDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "", true);
+        productDialog.setLayout(new BorderLayout(10, 10));
+        productDialog.setSize(500, 550);
+        productDialog.setLocationRelativeTo(this);
         
-        // Main form panel
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
         
-        // Product ID (auto-generated, non-editable)
+        // Product ID (Always non-editable)
         gbc.gridx = 0; gbc.gridy = 0;
         formPanel.add(new JLabel("Product ID:"), gbc);
         gbc.gridx = 1;
@@ -349,9 +375,9 @@ public class InventoryPanel extends JPanel {
         txtProductPrice = new JTextField(15);
         formPanel.add(txtProductPrice, gbc);
         
-        // Initial Stock
+        // Initial / Current Stock
         gbc.gridx = 0; gbc.gridy = 3;
-        formPanel.add(new JLabel("Initial Stock:*"), gbc);
+        formPanel.add(new JLabel("Stock:*"), gbc);
         gbc.gridx = 1;
         txtProductStock = new JTextField(15);
         formPanel.add(txtProductStock, gbc);
@@ -364,20 +390,20 @@ public class InventoryPanel extends JPanel {
         
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton btnSave = new JButton("Save Product");
-        btnSave.setBackground(new Color(46, 204, 113));
-        btnSave.setForeground(Color.WHITE);
-        btnSave.setFocusPainted(false);
-        btnSave.addActionListener(this::saveNewProduct);
+        btnSaveProduct = new JButton();
+        btnSaveProduct.setBackground(new Color(46, 204, 113));
+        btnSaveProduct.setForeground(Color.WHITE);
+        btnSaveProduct.setFocusPainted(false);
+        btnSaveProduct.addActionListener(this::saveProduct);
         
         JButton btnCancel = new JButton("Cancel");
-        btnCancel.addActionListener(e -> addProductDialog.setVisible(false));
+        btnCancel.addActionListener(e -> productDialog.setVisible(false));
         
-        buttonPanel.add(btnSave);
+        buttonPanel.add(btnSaveProduct);
         buttonPanel.add(btnCancel);
         
-        addProductDialog.add(formPanel, BorderLayout.CENTER);
-        addProductDialog.add(buttonPanel, BorderLayout.SOUTH);
+        productDialog.add(formPanel, BorderLayout.CENTER);
+        productDialog.add(buttonPanel, BorderLayout.SOUTH);
     }
     
     /**
@@ -387,23 +413,17 @@ public class InventoryPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createTitledBorder("Product Image (Optional)"));
         
-        // Image preview label
         lblImagePreview = new JLabel();
         lblImagePreview.setPreferredSize(new Dimension(120, 120));
         lblImagePreview.setHorizontalAlignment(SwingConstants.CENTER);
         lblImagePreview.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         lblImagePreview.setBackground(Color.WHITE);
         lblImagePreview.setOpaque(true);
-        lblImagePreview.setText("No Image\nSelected");
-        lblImagePreview.setFont(new Font("Arial", Font.ITALIC, 10));
-        lblImagePreview.setForeground(Color.GRAY);
         
-        // Image path label
-        lblImagePath = new JLabel("No file selected");
+        lblImagePath = new JLabel();
         lblImagePath.setFont(new Font("Arial", Font.PLAIN, 10));
         lblImagePath.setForeground(Color.GRAY);
         
-        // Buttons panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton btnSelectImage = new JButton("📷 Select Image");
         btnSelectImage.addActionListener(e -> selectProductImage());
@@ -433,156 +453,185 @@ public class InventoryPanel extends JPanel {
         fileChooser.setFileFilter(new FileNameExtensionFilter(
             "Image Files (JPG, PNG, JPEG)", "jpg", "jpeg", "png"));
         
-        int result = fileChooser.showOpenDialog(addProductDialog);
+        int result = fileChooser.showOpenDialog(productDialog);
         if (result == JFileChooser.APPROVE_OPTION) {
             selectedImageFile = fileChooser.getSelectedFile();
-            
-            // Update path label
             lblImagePath.setText(selectedImageFile.getName());
-            
-            // Show preview
-            try {
-                ImageIcon icon = new ImageIcon(selectedImageFile.getPath());
-                Image scaledImage = icon.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
-                lblImagePreview.setIcon(new ImageIcon(scaledImage));
-                lblImagePreview.setText("");
-            } catch (Exception ex) {
-                lblImagePreview.setIcon(null);
-                lblImagePreview.setText("Preview\nError");
-                JOptionPane.showMessageDialog(addProductDialog,
-                    "Could not load image preview.", "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            }
+            updateImagePreview(selectedImageFile.getPath());
         }
     }
     
     /**
-     * Clears the selected image.
+     * Updates the image component with a scaled preview.
+     */
+    private void updateImagePreview(String path) {
+        try {
+            ImageIcon icon = new ImageIcon(path);
+            Image scaledImage = icon.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+            lblImagePreview.setIcon(new ImageIcon(scaledImage));
+            lblImagePreview.setText("");
+        } catch (Exception ex) {
+            lblImagePreview.setIcon(null);
+            lblImagePreview.setText("Preview\nError");
+        }
+    }
+    
+    /**
+     * Clears the selected image tracking and UI preview.
      */
     private void clearSelectedImage() {
         selectedImageFile = null;
         lblImagePath.setText("No file selected");
         lblImagePreview.setIcon(null);
         lblImagePreview.setText("No Image\nSelected");
+        lblImagePreview.setFont(new Font("Arial", Font.ITALIC, 10));
+        lblImagePreview.setForeground(Color.GRAY);
+    }
+    
+    /**
+     * Searches for an existing image in the local directory for a given product ID.
+     */
+    private File findExistingImage(String productId) {
+        String[] extensions = {".jpg", ".jpeg", ".png"};
+        for (String ext : extensions) {
+            File file = new File(IMAGES_DIR + productId + ext);
+            if (file.exists()) {
+                return file;
+            }
+        }
+        return null;
     }
     
     /**
      * Saves the selected image to the product images directory.
-     * @param productId The product ID to use as filename
      * @return true if image was saved successfully, false otherwise
      */
     private boolean saveProductImage(String productId) {
         if (selectedImageFile == null) {
-            return true; // No image to save
+            return true; // No new image to save
         }
         
         try {
-            // Determine file extension from original file
             String fileName = selectedImageFile.getName();
             String extension = fileName.substring(fileName.lastIndexOf('.'));
             
-            // Validate extension
             if (!extension.equalsIgnoreCase(".jpg") && 
                 !extension.equalsIgnoreCase(".jpeg") && 
                 !extension.equalsIgnoreCase(".png")) {
-                JOptionPane.showMessageDialog(addProductDialog,
+                JOptionPane.showMessageDialog(productDialog,
                     "Only JPG, JPEG, and PNG images are supported.",
                     "Invalid Format", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
             
-            // Target path: data/product_images/{productId}{extension}
             String targetFileName = productId + extension.toLowerCase();
             Path targetPath = Paths.get(IMAGES_DIR, targetFileName);
             
-            // Copy file (overwrite if exists)
             Files.copy(selectedImageFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-            
             return true;
             
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(addProductDialog,
+            JOptionPane.showMessageDialog(productDialog,
                 "Error saving image: " + ex.getMessage(),
                 "Image Save Error", JOptionPane.WARNING_MESSAGE);
-            return false; // Image failed but product can still be saved
+            return false;
         }
     }
     
     /**
-     * Shows the add product dialog with auto-generated ID.
+     * Configures and displays the product form dialog.
+     * @param product The product to edit, or null to create a new one.
      */
-    private void showAddProductDialog() {
-        // Generate and set auto product ID
-        String newId = generateProductId();
-        txtProductId.setText(newId);
+    private void showProductForm(Product product) {
+        isEditMode = (product != null);
         
-        // Clear form fields
-        txtProductName.setText("");
-        txtProductPrice.setText("");
-        txtProductStock.setText("");
-        clearSelectedImage();
+        // Dynamically adjust titles and buttons depending on mode
+        productDialog.setTitle(isEditMode ? "Edit Product" : "Add New Product");
+        btnSaveProduct.setText(isEditMode ? "Update Product" : "Save Product");
+        btnSaveProduct.setBackground(isEditMode ? new Color(52, 152, 219) : new Color(46, 204, 113));
         
-        addProductDialog.setVisible(true);
+        if (isEditMode) {
+            // Fill fields with existing data
+            txtProductId.setText(product.getId());
+            txtProductName.setText(product.getName());
+            txtProductPrice.setText(String.valueOf(product.getPrice()));
+            txtProductStock.setText(String.valueOf(product.getStockQuantity()));
+            
+            selectedImageFile = null;
+            File existingImage = findExistingImage(product.getId());
+            if (existingImage != null) {
+                lblImagePath.setText(existingImage.getName());
+                updateImagePreview(existingImage.getPath());
+            } else {
+                clearSelectedImage();
+            }
+        } else {
+            // Generate standard inputs for clean new item
+            txtProductId.setText(generateProductId());
+            txtProductName.setText("");
+            txtProductPrice.setText("");
+            txtProductStock.setText("");
+            clearSelectedImage();
+        }
+        
+        productDialog.setVisible(true);
     }
     
     /**
-     * Saves a new product to the inventory.
+     * Processes saving or updating a product based on the current mode.
      */
-    private void saveNewProduct(ActionEvent e) {
+    private void saveProduct(ActionEvent e) {
         try {
             String id = txtProductId.getText().trim();
             String name = txtProductName.getText().trim();
             double price = Double.parseDouble(txtProductPrice.getText().trim());
             int stock = Integer.parseInt(txtProductStock.getText().trim());
             
-            // Validation
+            // Common Validation
             if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(addProductDialog,
-                    "Product Name is required.", "Validation Error",
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(productDialog,
+                    "Product Name is required.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (price < 0 || stock < 0) {
+                JOptionPane.showMessageDialog(productDialog,
+                    "Price and Stock cannot be negative.", "Validation Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
-            if (price < 0) {
-                JOptionPane.showMessageDialog(addProductDialog,
-                    "Price cannot be negative.", "Validation Error",
-                    JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            if (stock < 0) {
-                JOptionPane.showMessageDialog(addProductDialog,
-                    "Stock cannot be negative.", "Validation Error",
-                    JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            
-            // Check for duplicate ID (should not happen with auto-generation)
-            for (Product p : controller.getCafeSystem().getAllProducts()) {
-                if (p.getId().equals(id)) {
-                    JOptionPane.showMessageDialog(addProductDialog,
-                        "Product ID already exists. Please try again.",
-                        "Duplicate ID", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            }
-            
-            // Save product image if selected
+            // Save or replace image if selected
             saveProductImage(id);
+            Product targetProduct = new Product(id, name, price, stock);
             
-            // Create and save product
-            Product newProduct = new Product(id, name, price, stock);
-            controller.registerNewProduct(newProduct);
+            if (isEditMode) {
+                // Update existing product logic
+                controller.updateProduct(targetProduct);
+                
+                JOptionPane.showMessageDialog(productDialog,
+                    "Product '" + name + "' updated successfully!",
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                // Check for duplicate ID (Safety fallback)
+                for (Product p : controller.getCafeSystem().getAllProducts()) {
+                    if (p.getId().equals(id)) {
+                        JOptionPane.showMessageDialog(productDialog,
+                            "Product ID already exists. Please try again.",
+                            "Duplicate ID", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+                
+                controller.registerNewProduct(targetProduct);
+                
+                JOptionPane.showMessageDialog(productDialog,
+                    "Product '" + name + "' added successfully!\nProduct ID: " + id,
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
+            }
             
-            JOptionPane.showMessageDialog(addProductDialog,
-                "Product '" + name + "' added successfully!\n" +
-                "Product ID: " + id,
-                "Success", JOptionPane.INFORMATION_MESSAGE);
-            
-            addProductDialog.setVisible(false);
+            productDialog.setVisible(false);
             
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(addProductDialog,
+            JOptionPane.showMessageDialog(productDialog,
                 "Please enter valid numbers for Price and Stock.",
                 "Invalid Input", JOptionPane.ERROR_MESSAGE);
         }

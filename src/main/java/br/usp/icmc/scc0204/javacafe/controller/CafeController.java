@@ -104,6 +104,16 @@ public class CafeController {
         fireInventoryUpdated(); // Notify after adding product
     }
     
+    /**
+     * Updates an existing product's details (e.g., name, price, stock).
+     * Dispatches an inventory update event to refresh the UI.
+     * * @param product The product containing the updated information.
+     */
+    public void updateProduct(Product product) {
+        cafeSystem.updateProduct(product);
+        fireInventoryUpdated(); // Notify UI to refresh after updating details
+    }
+    
     public void updateStock(String productId, int newQuantity) {
         cafeSystem.updateStock(productId, newQuantity);
         fireInventoryUpdated(); // Notify after updating stock

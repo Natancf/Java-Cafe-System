@@ -34,6 +34,12 @@ public interface CafeSystemContract {
     
     void addProduct(Product product);
     
+    /**
+     * Updates an existing product in the inventory.
+     * @param product The product with updated information.
+     */
+    void updateProduct(Product product);
+    
     void updateStock(String productId, int newQuantity);
     
     List<Product> getAllProducts();

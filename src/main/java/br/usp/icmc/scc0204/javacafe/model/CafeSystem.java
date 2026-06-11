@@ -130,6 +130,28 @@ public class CafeSystem implements CafeSystemContract {
     }
 
     @Override
+    public void updateProduct(Product updatedProduct) {
+        if (updatedProduct == null || updatedProduct.getId() == null) {
+            return;
+        }
+        
+        // Find the product by ID and replace it entirely in the list
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.get(i).getId().equals(updatedProduct.getId())) {
+                inventory.set(i, updatedProduct);
+                break;
+            }
+        }
+        
+        // Save the updated list
+        try {
+            DataStorage.saveInventory(inventory);
+        } catch (IOException e) {
+            System.err.println("Error saving inventory after product update: " + e.getMessage());
+        }
+    }
+
+    @Override
     public void updateStock(String productId, int newQuantity) {
         for (Product product : inventory) {
             if (product.getId().equals(productId)) {
