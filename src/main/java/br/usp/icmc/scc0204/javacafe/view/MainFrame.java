@@ -22,7 +22,7 @@ public class MainFrame extends JFrame {
         tabbedPane = new JTabbedPane();
 
         JPanel POSPanel = new POSPanel(controller);
-        JPanel inventoryPanel = createPlaceholder("Inventory Module - Under Development");
+        JPanel inventoryPanel = new InventoryPanel(controller);
         JPanel dashboardPanel = new DashboardPanel(controller);
 
         // Add tabs with their respective titles

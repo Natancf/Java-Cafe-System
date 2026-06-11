@@ -1,8 +1,8 @@
 id,nome,preco,qtd
-PROD-1,Espresso Tradicional,6.00,25
-PROD-2,Cafe Latte,8.50,15
-PROD-3,Capuccino Italiano,9.50,12
-PROD-4,Iced Vanilla Latte,11.00,8
-PROD-5,Coxinha de Frango,7.50,4
-PROD-6,Pao de Queijo Mineiro,6.50,18
-PROD-7,Suco Natural de Laranja,8.00,10
+PROD-1,Espresso Tradicional,6.0,23
+PROD-2,Cafe Latte,8.5,15
+PROD-3,Capuccino Italiano,9.5,12
+PROD-4,Iced Vanilla Latte,11.0,8
+PROD-5,Coxinha de Frango,7.5,4
+PROD-6,Pao de Queijo Mineiro,6.5,18
+PROD-7,Suco Natural de Laranja,8.0,10
