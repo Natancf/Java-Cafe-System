@@ -137,16 +137,14 @@ public class CafeSystem implements CafeSystemContract {
     @Override public void addProduct(Product product) { inventory.add(product); }
     @Override public List<Product> getAllProducts() { return inventory; }
     
-
     @Override public double calculateSubtotal(Order order) { return order.getSubtotal(); }
     @Override public double calculateTax(Order order) { return order.getTax(); }
 
-
     @Override public void updateStock(String productId, int newQuantity) {
         for (Product product : inventory) {
-        if (product.getId().equals(productId)) {
-            product.setStockQuantity(newQuantity);
-            break;
+            if (product.getId().equals(productId)) {
+                product.setStockQuantity(newQuantity);
+                break;
             }
         }
         try {
@@ -155,24 +153,53 @@ public class CafeSystem implements CafeSystemContract {
             System.err.println("Erro ao salvar estoque.");
         }
     }
+
     @Override public Report getDailyReport() {
-        return generateGenericReport();
+        return generateFilteredReport("DAILY");
     }
+    
     @Override public Report getWeeklyReport() {
-        return generateGenericReport();
+        return generateFilteredReport("WEEKLY");
     }
+    
     @Override public Report getMonthlyReport() {
-        return generateGenericReport();
+        return generateFilteredReport("MONTHLY");
+    }
+
+    private boolean isWithinTimeFrame(String orderId, String timeframe, java.time.LocalDate today) {
+        if (orderId == null || orderId.length() < 12) return false;
+        
+        try {
+            // Extracts the date from the order code (e.g., ORD-yyyyMMdd-HHmmss)
+            String dateString = orderId.substring(4, 12);
+            java.time.LocalDate orderDate = java.time.LocalDate.parse(dateString, 
+                    java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+            switch (timeframe) {
+                case "DAILY":
+                    return orderDate.isEqual(today);
+                case "WEEKLY":
+                    return !orderDate.isBefore(today.minusDays(7)) && !orderDate.isAfter(today);
+                case "MONTHLY":
+                    return orderDate.getYear() == today.getYear() && 
+                           orderDate.getMonthValue() == today.getMonthValue();
+                default:
+                    return true;
+            }
+        } catch (Exception e) {
+            return false; 
+        }
     }
 
     /**
-     * Generates a complete report with revenue, transaction count, top products,
+     * Generates a complete filtered report with revenue, transaction count, top products,
      * and detailed sales quantities.
      */
-    private Report generateGenericReport() {
+    private Report generateFilteredReport(String timeframe) {
         double totalRevenue = 0;
         int transactionCount = 0;
         Map<String, Integer> productSalesCount = new java.util.HashMap<>();
+        java.time.LocalDate today = java.time.LocalDate.now();
 
         // Read sales data to calculate revenue and transaction count
         try (BufferedReader reader = new BufferedReader(new FileReader("data/vendas.csv"))) {
@@ -188,6 +215,9 @@ public class CafeSystem implements CafeSystemContract {
 
                 String[] parts = line.split(",");
                 if (parts.length < 3) continue;
+                
+                String orderId = parts[0];
+                if (!isWithinTimeFrame(orderId, timeframe, today)) continue;
                 
                 try {
                     totalRevenue += Double.parseDouble(parts[2]);
@@ -215,6 +245,9 @@ public class CafeSystem implements CafeSystemContract {
 
                 String[] parts = line.split(",");
                 if (parts.length < 3) continue;
+                
+                String orderId = parts[0];
+                if (!isWithinTimeFrame(orderId, timeframe, today)) continue;
                 
                 try {
                     String productId = parts[1].trim();
