@@ -33,7 +33,7 @@ public class CafeController {
         }
     }
 
-    public String finalizeCurrentOrder(PaymentMethod method) throws InvalidPaymentException, OutOfStockException {
+    public String finalizeCurrentOrder(PaymentMethod method) throws InvalidPaymentException, OutOfStockException, EmptyOrderException {
         if (this.currentOrder == null) {
             throw new IllegalStateException("Não há nenhum pedido em andamento para finalizar.");
         }

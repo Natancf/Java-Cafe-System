@@ -7,6 +7,8 @@ import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
+
+        
         try {
             // Initialize the engine and the CSV database
             CafeSystemContract system = new CafeSystem();
