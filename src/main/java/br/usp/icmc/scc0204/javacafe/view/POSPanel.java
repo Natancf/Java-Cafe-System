@@ -11,16 +11,20 @@ import java.awt.*;
 import java.io.File;
 import java.util.Map;
 import java.util.List;
+import java.beans.PropertyChangeListener;
 
 public class POSPanel extends JPanel {
 
     private CafeController controller;
     
     // UI Components
-    private JPanel menuGridPanel; // Container dos cards para podermos recarregar
+    private JPanel menuGridPanel;
     private DefaultTableModel cartModel;
     private JTable cartTable;
     private JLabel lblSubtotal, lblTax, lblTotal;
+    
+    // Listener for inventory updates
+    private PropertyChangeListener inventoryListener;
 
     public POSPanel(CafeController controller) {
         this.controller = controller;
@@ -38,7 +42,6 @@ public class POSPanel extends JPanel {
         scrollMenu.getVerticalScrollBar().setUnitIncrement(16);
         menuPanel.add(scrollMenu, BorderLayout.CENTER);
 
-        // Fill in the product grid for the first time.
         rebuildMenuGrid();
 
         // East: Summary of the Order (Side)
@@ -46,10 +49,28 @@ public class POSPanel extends JPanel {
 
         add(menuPanel, BorderLayout.CENTER);
         add(sideCart, BorderLayout.EAST);
+        
+        // Register listener for inventory updates
+        setupInventoryListener();
+    }
+    
+    /**
+     * Sets up a listener to refresh the menu when inventory changes.
+     */
+    private void setupInventoryListener() {
+        inventoryListener = evt -> {
+            if (CafeController.INVENTORY_UPDATED.equals(evt.getPropertyName())) {
+                SwingUtilities.invokeLater(() -> {
+                    rebuildMenuGrid();
+                    refreshCartUI();
+                });
+            }
+        };
+        controller.addPropertyChangeListener(inventoryListener);
     }
 
     /**
-     * Recreates the product grid. Useful for resetting the buttons after a sale.
+     * Recreates the product grid.
      */
     private void rebuildMenuGrid() {
         menuGridPanel.removeAll();
@@ -71,7 +92,7 @@ public class POSPanel extends JPanel {
         card.setBackground(Color.WHITE);
 
         // Image
-JLabel lblImage = new JLabel();
+        JLabel lblImage = new JLabel();
         lblImage.setAlignmentX(Component.CENTER_ALIGNMENT);
         String imagePath = "data/product_images/" + product.getId();
         
@@ -79,7 +100,6 @@ JLabel lblImage = new JLabel();
         File fileJpg = new File(imagePath + ".jpg");
         File fileJpeg = new File(imagePath + ".jpeg");
         
-        // Adicionando a verificação do .jpeg no final da cadeia
         String finalPath = filePng.exists() ? filePng.getPath() : 
                            (fileJpg.exists() ? fileJpg.getPath() : 
                            (fileJpeg.exists() ? fileJpeg.getPath() : null));
@@ -103,11 +123,11 @@ JLabel lblImage = new JLabel();
         if (!isAvailable) {
             lblPrice.setText("ESGOTADO");
             lblPrice.setFont(new Font("Arial", Font.BOLD, 14));
-            lblPrice.setForeground(new Color(231, 76, 60)); // Red flag
+            lblPrice.setForeground(new Color(231, 76, 60));
         } else if (product.isStockLow()) { 
             lblPrice.setText("R$ " + String.format("%.2f", product.getPrice()) + " (Apenas " + product.getStockQuantity() + " un!)");
             lblPrice.setFont(new Font("Arial", Font.BOLD, 12));
-            lblPrice.setForeground(new Color(230, 126, 34)); // Orange flag
+            lblPrice.setForeground(new Color(230, 126, 34));
         } else {
             lblPrice.setText("R$ " + String.format("%.2f", product.getPrice()));
             lblPrice.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -125,14 +145,13 @@ JLabel lblImage = new JLabel();
         btnAdd.setBackground(new Color(52, 152, 219));
         btnAdd.setForeground(Color.WHITE);
         
-        // Se estiver esgotado, desativa visualmente o botão de adicionar
         if (!isAvailable) {
             btnAdd.setEnabled(false);
             btnAdd.setBackground(Color.LIGHT_GRAY);
         }
         panelAdd.add(btnAdd);
 
-        // Quantity Controls [- 1 +]
+        // Quantity Controls
         JPanel panelQty = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panelQty.setBackground(Color.WHITE);
         JButton btnMinus = new JButton("-");
@@ -145,21 +164,20 @@ JLabel lblImage = new JLabel();
         panelQty.add(lblQty);
         panelQty.add(btnPlus);
 
-        // Add the two cards to the container.
         actionContainer.add(panelAdd, "ADD_STATE");
         actionContainer.add(panelQty, "QTY_STATE");
 
         CardLayout cl = (CardLayout) actionContainer.getLayout();
 
-        // Clicks
         btnAdd.addActionListener(e -> {
             try {
                 controller.addItemToCurrentOrder(product, 1);
                 lblQty.setText("1");
-                cl.show(actionContainer, "QTY_STATE"); // switch to + -
+                cl.show(actionContainer, "QTY_STATE");
                 refreshCartUI();
             } catch (OutOfStockException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Estoque Baixo", JOptionPane.WARNING_MESSAGE);
+                rebuildMenuGrid(); // Refresh to show updated stock status
             }
         });
 
@@ -171,6 +189,7 @@ JLabel lblImage = new JLabel();
                 refreshCartUI();
             } catch (OutOfStockException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Estoque Baixo", JOptionPane.WARNING_MESSAGE);
+                rebuildMenuGrid();
             }
         });
 
@@ -179,7 +198,7 @@ JLabel lblImage = new JLabel();
             Integer currentQty = controller.getCurrentOrder().getItems().get(product);
             
             if (currentQty == null || currentQty == 0) {
-                cl.show(actionContainer, "ADD_STATE"); // back to "Adicionar"
+                cl.show(actionContainer, "ADD_STATE");
             } else {
                 lblQty.setText(String.valueOf(currentQty));
             }
@@ -190,7 +209,7 @@ JLabel lblImage = new JLabel();
         card.add(lblImage);
         card.add(lblName);
         card.add(lblPrice);
-        card.add(actionContainer); // It adds a dynamic area instead of fixed controls.
+        card.add(actionContainer);
         card.add(Box.createVerticalStrut(10));
 
         return card;
@@ -229,6 +248,8 @@ JLabel lblImage = new JLabel();
 
     private void refreshCartUI() {
         cartModel.setRowCount(0);
+        if (controller.getCurrentOrder() == null) return;
+        
         Map<Product, Integer> items = controller.getCurrentOrder().getItems();
         for (Map.Entry<Product, Integer> entry : items.entrySet()) {
             cartModel.addRow(new Object[]{
@@ -243,7 +264,7 @@ JLabel lblImage = new JLabel();
     }
 
     private void showPaymentScreen() {
-        if (controller.getCurrentOrder().getItems().isEmpty()) {
+        if (controller.getCurrentOrder() == null || controller.getCurrentOrder().getItems().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Carrinho vazio!");
             return;
         }
@@ -263,14 +284,26 @@ JLabel lblImage = new JLabel();
                 String receipt = controller.finalizeCurrentOrder(method);
                 JOptionPane.showMessageDialog(this, receipt, "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                 
-                // Prepare the clean screen for the next customer.
+                // Start new order for next customer
                 controller.startNewOrder();
-                rebuildMenuGrid(); // Resets all buttons back to "Add"
-                refreshCartUI();   // Clear the sidebar and the values.
+                refreshCartUI();
+                
+                // Note: rebuildMenuGrid will be triggered by the inventory listener
                 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Erro: " + ex.getMessage());
             }
         }
+    }
+    
+    /**
+     * Clean up listener when panel is disposed.
+     */
+    @Override
+    public void removeNotify() {
+        if (inventoryListener != null) {
+            controller.removePropertyChangeListener(inventoryListener);
+        }
+        super.removeNotify();
     }
 }

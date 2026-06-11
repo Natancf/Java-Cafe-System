@@ -7,6 +7,7 @@ import main.java.br.usp.icmc.scc0204.javacafe.controller.CafeController;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 
 /**
@@ -24,6 +25,9 @@ public class DashboardPanel extends JPanel {
     private JComboBox<String> reportPeriodCombo;
     private DefaultTableModel topProductsModel;
     
+    // Listener for order finalization
+    private PropertyChangeListener orderListener;
+    
     /**
      * Constructor with controller injection.
      * @param controller The cafe controller instance
@@ -34,7 +38,20 @@ public class DashboardPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
         initializeComponents();
+        setupOrderListener();
         loadReportData();
+    }
+    
+    /**
+     * Sets up a listener to refresh the dashboard when an order is finalized.
+     */
+    private void setupOrderListener() {
+        orderListener = evt -> {
+            if (CafeController.ORDER_FINALIZED.equals(evt.getPropertyName())) {
+                SwingUtilities.invokeLater(() -> loadReportData());
+            }
+        };
+        controller.addPropertyChangeListener(orderListener);
     }
     
     /**
@@ -169,7 +186,7 @@ public class DashboardPanel extends JPanel {
         if (report != null) {
             lblRevenueValue.setText(String.format("R$ %.2f", report.getTotalRevenue()));
             lblTransactionsValue.setText(String.valueOf(report.getTransactionCount()));
-            updateTopProductsTable(report); // Pass the entire report, not just the list
+            updateTopProductsTable(report);
         } else {
             showEmptyData();
         }
@@ -193,7 +210,7 @@ public class DashboardPanel extends JPanel {
         
         for (int i = 0; i < topProducts.size() && i < 3; i++) {
             Product product = topProducts.get(i);
-            int unitsSold = report.getProductSalesCount(product); // Now using the report!
+            int unitsSold = report.getProductSalesCount(product);
             
             topProductsModel.addRow(new Object[]{
                 medals[i],
@@ -211,5 +228,16 @@ public class DashboardPanel extends JPanel {
         lblTransactionsValue.setText("0");
         topProductsModel.setRowCount(0);
         topProductsModel.addRow(new Object[]{"-", "No data available", "-"});
+    }
+    
+    /**
+     * Clean up listener when panel is disposed.
+     */
+    @Override
+    public void removeNotify() {
+        if (orderListener != null) {
+            controller.removePropertyChangeListener(orderListener);
+        }
+        super.removeNotify();
     }
 }

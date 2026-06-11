@@ -8,6 +8,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 
 /**
@@ -33,6 +34,9 @@ public class InventoryPanel extends JPanel {
     private JDialog addProductDialog;
     private JTextField txtProductId, txtProductName, txtProductPrice, txtProductStock;
     
+    // Listener for inventory updates
+    private PropertyChangeListener inventoryListener;
+    
     /**
      * Constructor with controller injection.
      * @param controller The cafe controller instance
@@ -43,8 +47,24 @@ public class InventoryPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
         initializeComponents();
+        setupInventoryListener();
         refreshInventoryTable();
         updateLowStockWarning();
+    }
+    
+    /**
+     * Sets up a listener to refresh the inventory when changes occur.
+     */
+    private void setupInventoryListener() {
+        inventoryListener = evt -> {
+            if (CafeController.INVENTORY_UPDATED.equals(evt.getPropertyName())) {
+                SwingUtilities.invokeLater(() -> {
+                    refreshInventoryTable();
+                    updateLowStockWarning();
+                });
+            }
+        };
+        controller.addPropertyChangeListener(inventoryListener);
     }
     
     /**
@@ -119,7 +139,6 @@ public class InventoryPanel extends JPanel {
         inventoryModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                // Only allow editing of Stock column (column index 3)
                 return column == 3;
             }
         };
@@ -148,9 +167,8 @@ public class InventoryPanel extends JPanel {
                 try {
                     int newStock = Integer.parseInt(stockValue.toString());
                     if (newStock >= 0) {
-                        controller.getCafeSystem().updateStock(productId, newStock);
-                        refreshInventoryTable();
-                        updateLowStockWarning();
+                        controller.updateStock(productId, newStock);
+                        // Note: refresh will be triggered by the listener
                     } else {
                         JOptionPane.showMessageDialog(InventoryPanel.this,
                             "Stock cannot be negative.", "Invalid Input",
@@ -184,11 +202,11 @@ public class InventoryPanel extends JPanel {
     private JPanel createBottomPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder(
-        BorderFactory.createLineBorder(new Color(231, 76, 60), 1),
-        "Alerts",
-        TitledBorder.CENTER,
-        TitledBorder.TOP
-    ));
+            BorderFactory.createLineBorder(new Color(231, 76, 60), 1),
+            "Alerts",
+            TitledBorder.CENTER,
+            TitledBorder.TOP
+        ));
         panel.setPreferredSize(new Dimension(0, 80));
         
         lblLowStockWarning = new JLabel();
@@ -333,8 +351,7 @@ public class InventoryPanel extends JPanel {
                 "Success", JOptionPane.INFORMATION_MESSAGE);
             
             addProductDialog.setVisible(false);
-            refreshInventoryTable();
-            updateLowStockWarning();
+            // Note: refresh will be triggered by the listener
             
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(addProductDialog,
@@ -412,6 +429,17 @@ public class InventoryPanel extends JPanel {
             lblLowStockWarning.setText(warning.toString());
             lblLowStockWarning.setForeground(new Color(231, 76, 60));
         }
+    }
+    
+    /**
+     * Clean up listener when panel is disposed.
+     */
+    @Override
+    public void removeNotify() {
+        if (inventoryListener != null) {
+            controller.removePropertyChangeListener(inventoryListener);
+        }
+        super.removeNotify();
     }
     
     /**
