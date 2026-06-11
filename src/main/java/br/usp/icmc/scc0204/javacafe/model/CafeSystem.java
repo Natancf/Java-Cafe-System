@@ -3,6 +3,8 @@ package main.java.br.usp.icmc.scc0204.javacafe.model;
 import main.java.br.usp.icmc.scc0204.javacafe.exceptions.*;
 import main.java.br.usp.icmc.scc0204.javacafe.DataStorage;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -140,8 +142,81 @@ public class CafeSystem implements CafeSystemContract {
     @Override public double calculateTax(Order order) { return order.getTax(); }
 
 
-    @Override public void updateStock(String productId, int newQuantity) {}
-    @Override public Report getDailyReport() { return null; }
-    @Override public Report getWeeklyReport() { return null; }
-    @Override public Report getMonthlyReport() { return null; }
+    @Override public void updateStock(String productId, int newQuantity) {
+        for (Product product : inventory) {
+        if (product.getId().equals(productId)) {
+            product.setStockQuantity(newQuantity);
+            break;
+            }
+        }
+        try {
+            DataStorage.saveInventory(inventory);
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar estoque.");
+        }
+    }
+    @Override public Report getDailyReport() {
+        return generateGenericReport();
+    }
+    @Override public Report getWeeklyReport() {
+        return generateGenericReport();
+    }
+    @Override public Report getMonthlyReport() {
+        return generateGenericReport();
+    }
+
+    private Report generateGenericReport() {
+        double totalRevenue = 0;
+        int transactionCount = 0;
+        Map<String, Integer> productSales = new java.util.HashMap<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader("data/vendas.csv"))) {
+            reader.readLine(); // reads the header
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+
+                String[] parts = line.split(",");
+                totalRevenue += Double.parseDouble(parts[2]);
+                transactionCount++;
+            }
+        } catch (IOException e) {
+            System.err.println("Erro ao ler vendas.");
+        }
+
+        // Reads the sold items to calculate top products
+        try (BufferedReader reader = new BufferedReader(new FileReader("data/vendas_itens.csv"))) {
+            reader.readLine(); // header
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+
+                String[] parts = line.split(",");
+                String productId = parts[1];
+                int qty = Integer.parseInt(parts[2]);
+
+                productSales.put(productId, productSales.getOrDefault(productId, 0) + qty);
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to read sold items.");
+        }
+
+        // Top 3 products based on quantity sold
+        List<Product> topProducts = new ArrayList<>();
+
+        productSales.entrySet().stream()
+            .sorted((a, b) -> b.getValue() - a.getValue())
+            .limit(3)
+            .forEach(entry -> {
+                for (Product p : inventory) {
+                    if (p.getId().equals(entry.getKey())) {
+                        topProducts.add(p);
+                    }
+                }
+            });
+
+        return new Report(totalRevenue, transactionCount, topProducts);
+    }
 }
