@@ -71,12 +71,18 @@ public class POSPanel extends JPanel {
         card.setBackground(Color.WHITE);
 
         // Image
-        JLabel lblImage = new JLabel();
+JLabel lblImage = new JLabel();
         lblImage.setAlignmentX(Component.CENTER_ALIGNMENT);
         String imagePath = "data/product_images/" + product.getId();
+        
         File filePng = new File(imagePath + ".png");
         File fileJpg = new File(imagePath + ".jpg");
-        String finalPath = filePng.exists() ? filePng.getPath() : (fileJpg.exists() ? fileJpg.getPath() : null);
+        File fileJpeg = new File(imagePath + ".jpeg");
+        
+        // Adicionando a verificação do .jpeg no final da cadeia
+        String finalPath = filePng.exists() ? filePng.getPath() : 
+                           (fileJpg.exists() ? fileJpg.getPath() : 
+                           (fileJpeg.exists() ? fileJpeg.getPath() : null));
 
         if (finalPath != null) {
             ImageIcon icon = new ImageIcon(new ImageIcon(finalPath).getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH));
@@ -90,8 +96,23 @@ public class POSPanel extends JPanel {
         lblName.setFont(new Font("Arial", Font.BOLD, 14));
         lblName.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblPrice = new JLabel("R$ " + String.format("%.2f", product.getPrice()));
+        JLabel lblPrice = new JLabel();
         lblPrice.setAlignmentX(Component.CENTER_ALIGNMENT);
+        boolean isAvailable = product.getStockQuantity() > 0;
+
+        if (!isAvailable) {
+            lblPrice.setText("ESGOTADO");
+            lblPrice.setFont(new Font("Arial", Font.BOLD, 14));
+            lblPrice.setForeground(new Color(231, 76, 60)); // Red flag
+        } else if (product.isStockLow()) { 
+            lblPrice.setText("R$ " + String.format("%.2f", product.getPrice()) + " (Apenas " + product.getStockQuantity() + " un!)");
+            lblPrice.setFont(new Font("Arial", Font.BOLD, 12));
+            lblPrice.setForeground(new Color(230, 126, 34)); // Orange flag
+        } else {
+            lblPrice.setText("R$ " + String.format("%.2f", product.getPrice()));
+            lblPrice.setFont(new Font("Arial", Font.PLAIN, 14));
+            lblPrice.setForeground(Color.BLACK);
+        }
 
         JPanel actionContainer = new JPanel(new CardLayout());
         actionContainer.setBackground(Color.WHITE);
@@ -103,6 +124,12 @@ public class POSPanel extends JPanel {
         JButton btnAdd = new JButton("Adicionar");
         btnAdd.setBackground(new Color(52, 152, 219));
         btnAdd.setForeground(Color.WHITE);
+        
+        // Se estiver esgotado, desativa visualmente o botão de adicionar
+        if (!isAvailable) {
+            btnAdd.setEnabled(false);
+            btnAdd.setBackground(Color.LIGHT_GRAY);
+        }
         panelAdd.add(btnAdd);
 
         // Quantity Controls [- 1 +]
@@ -230,7 +257,7 @@ public class POSPanel extends JPanel {
                 null, options, options[0]);
 
         if (selection >= 0 && selection < 3) {
-            PaymentMethod method = (selection == 0) ? PaymentMethod.PIX : 
+            PaymentMethod method = (selection == 0) ? PaymentMethod.PIX: 
                                    (selection == 1) ? PaymentMethod.CREDIT_CARD : PaymentMethod.DEBIT_CARD;
             try {
                 String receipt = controller.finalizeCurrentOrder(method);

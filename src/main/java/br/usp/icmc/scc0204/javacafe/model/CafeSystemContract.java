@@ -2,8 +2,7 @@ package main.java.br.usp.icmc.scc0204.javacafe.model;
 
 import java.util.List;
 
-import main.java.br.usp.icmc.scc0204.javacafe.exceptions.OutOfStockException;
-import main.java.br.usp.icmc.scc0204.javacafe.exceptions.InvalidPaymentException;
+import main.java.br.usp.icmc.scc0204.javacafe.exceptions.*;
 
 /**
  * Main contract for the Java Café Point of Sale System.
@@ -26,8 +25,8 @@ public interface CafeSystemContract {
     double calculateTax(Order order);
     
     double calculateTotal(Order order);
-    
-    void finalizeOrder(Order order, PaymentMethod paymentMethod) throws InvalidPaymentException, OutOfStockException;
+
+    void finalizeOrder(Order order, PaymentMethod paymentMethod) throws InvalidPaymentException, OutOfStockException, EmptyOrderException;
     
     String generateReceipt(Order order);
 

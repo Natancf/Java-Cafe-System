@@ -21,18 +21,13 @@ public class MainFrame extends JFrame {
         // Initialize the tab manager
         tabbedPane = new JTabbedPane();
 
-        // -------------------------------------------------------------
-        // PLACEHOLDERS: Temporary panels until the team finishes
-        // -------------------------------------------------------------
-        // Once your teammates finish, replace these simple JPanels
-        // with their actual classes (e.g., new POSPanel(controller))
         JPanel POSPanel = new POSPanel(controller);
         JPanel inventoryPanel = createPlaceholder("Inventory Module - Under Development");
         JPanel dashboardPanel = createPlaceholder("Dashboard Module - Under Development");
 
         // Add tabs with their respective titles
-        tabbedPane.addTab("Point of Sale (POS)", POSPanel);
-        tabbedPane.addTab("Inventory", inventoryPanel);
+        tabbedPane.addTab("Painel de Venda", POSPanel);
+        tabbedPane.addTab("Estoque", inventoryPanel);
         tabbedPane.addTab("Dashboards & Reports", dashboardPanel);
 
         // Add the tabbed pane to the main window container

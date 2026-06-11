@@ -39,4 +39,18 @@ public class Product {
         }
         this.stockQuantity -= quantity;
     }
+
+    private int lowStockThreshold = 5; // Customizable default limit
+
+    public int getLowStockThreshold() {
+        return this.lowStockThreshold;
+    }
+
+    public void setLowStockThreshold(int threshold) {
+        this.lowStockThreshold = threshold;
+    }
+
+    public boolean isStockLow() {
+        return this.stockQuantity <= this.lowStockThreshold;
+    }
 }
