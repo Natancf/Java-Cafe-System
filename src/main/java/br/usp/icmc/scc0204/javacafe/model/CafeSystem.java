@@ -30,7 +30,7 @@ public class CafeSystem implements CafeSystemContract {
         }
     }
 
-    // ==================== ORDER PROCESSING ====================
+    // ORDER PROCESSING
 
     @Override
     public Order createOrder() {
@@ -117,7 +117,7 @@ public class CafeSystem implements CafeSystemContract {
         return sb.toString();
     }
 
-    // ==================== INVENTORY MANAGEMENT ====================
+    // INVENTORY MANAGEMENT
 
     @Override
     public void addProduct(Product product) {
@@ -182,7 +182,7 @@ public class CafeSystem implements CafeSystemContract {
         return lowStockList;
     }
 
-    // ==================== CALCULATIONS (delegated to Order) ====================
+    // CALCULATIONS (delegated to Order)
 
     @Override 
     public double calculateTotal(Order order) { 
@@ -199,7 +199,7 @@ public class CafeSystem implements CafeSystemContract {
         return order.getTax(); 
     }
 
-    // ==================== SALES REPORTING ====================
+    // SALES REPORTING
 
     @Override 
     public Report getDailyReport() {

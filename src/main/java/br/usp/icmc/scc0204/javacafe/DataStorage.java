@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 public class DataStorage {
-    private static final String ESTOQUE_PATH = "data/estoque.csv";
-    private static final String VENDAS_PATH = "data/vendas.csv";
-    private static final String VENDAS_ITENS_PATH = "data/vendas_itens.csv";
+    private static String ESTOQUE_PATH = "data/estoque.csv";
+    private static String VENDAS_PATH = "data/vendas.csv";
+    private static String VENDAS_ITENS_PATH = "data/vendas_itens.csv";
 
 
     // Stock
@@ -108,5 +108,17 @@ public class DataStorage {
             }
         }
         return lastNumber;
+    }
+
+    public static void setTestMode(boolean isTest) {
+        if (isTest) {
+            ESTOQUE_PATH = "data/test_estoque.csv";
+            VENDAS_PATH = "data/test_vendas.csv";
+            VENDAS_ITENS_PATH = "data/test_vendas_itens.csv";
+        } else {
+            ESTOQUE_PATH = "data/estoque.csv";
+            VENDAS_PATH = "data/vendas.csv";
+            VENDAS_ITENS_PATH = "data/vendas_itens.csv";
+        }
     }
 }

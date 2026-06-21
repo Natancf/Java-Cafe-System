@@ -1,10 +1,16 @@
-*.class
-target/
-.idea/
-# Ignora todos os arquivos CSV dentro da pasta data
-data/*.csv
-
-# Ignora pastas de compilação da IDE
+# Compilações e Binários
 bin/
-out/
+*.class
+
+# Arquivos de IDE
+.idea/
+*.iml
 .vscode/
+.settings/
+
+# Banco de dados local (Não enviar para o GitHub)
+data/estoque.csv
+data/vendas.csv
+data/vendas_itens.csv
+data/product_images/*
+!data/product_images/.gitkeep
