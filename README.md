@@ -259,5 +259,5 @@ O principal problema técnico enfrentado ocorreu durante a integração do JUnit
 A documentação completa das classes e interfaces do sistema foi gerada utilizando a ferramenta **JavaDoc**. Acesse a documentação técnica interativa hospedada diretamente neste repositório.
 
 ```
-
+https://natancf.github.io/Java-Cafe-System/
 ```
