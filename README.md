@@ -1,23 +1,26 @@
 # ☕ Java Café - POS & Inventory System
 
-Projeto desenvolvido para a disciplina de Programação Orientada a Objetos, consistindo em um Sistema de Ponto de Venda (POS) e Gestão de Estoque completo com interface gráfica em Java Swing.
+Project developed for the Object-Oriented Programming course, consisting of a complete Point of Sale (POS) and Inventory Management System with a graphical user interface in Java Swing.
 
-### 👥 Identificação do Grupo
+### 👥 Group Identification
+
 * **Davi Azevedo Guedes de Sá**
-* **Natanael Costa de Freitas** 
+* **Natanael Costa de Freitas**
 * **Pietro Gutiérrez García-Urrutia**
 
 ---
 
 ## 1. Requirements
-O sistema atende a todos os requisitos propostos para o gerenciamento de um POS. Além dos requisitos base, implementamos validações customizadas para as formas de pagamento (rejeitando valores zerados/negativos) e um sistema de alerta configurável para o monitoramento de estoque baixo.
+
+The system meets all proposed requirements for POS management. In addition to the base requirements, we implemented custom validations for payment methods (rejecting zero/negative values) and a configurable alert system for low stock monitoring.
 
 ## 2. Project Description
-O projeto adota o padrão de arquitetura MVC (Model-View-Controller)...
+
+The project adopts the MVC (Model-View-Controller) architecture pattern...
 
 ```mermaid
 classDiagram
-    %% Camada CONTROLLER
+    %% CONTROLLER Layer
     class CafeController {
         -CafeSystemContract cafeSystem
         -Order currentOrder
@@ -30,7 +33,7 @@ classDiagram
         +updateStock(String, int) void
     }
 
-    %% Camada MODEL (Contratos e Lógica)
+    %% MODEL Layer (Contracts and Logic)
     class CafeSystemContract {
         <<interface>>
         +createOrder() Order
@@ -77,7 +80,7 @@ classDiagram
         +validatePayment() void
     }
 
-    %% Camada VIEW (Interface)
+    %% VIEW Layer (Interface)
     class MainFrame {
         -CafeController controller
         -JTabbedPane tabbedPane
@@ -103,7 +106,7 @@ classDiagram
         +loadReportData() void
     }
 
-    %% Camada de INFRAESTRUTURA
+    %% INFRASTRUCTURE Layer
     class DataStorage {
         <<utility>>
         -String ESTOQUE_PATH
@@ -114,7 +117,7 @@ classDiagram
         +setTestMode(boolean) void
     }
 
-    %% RELACIONAMENTOS E DEPENDÊNCIAS
+    %% RELATIONSHIPS AND DEPENDENCIES
     CafeSystem ..|> CafeSystemContract : implements (Realization)
     CafeController --> CafeSystemContract : manages (Association)
     
@@ -126,24 +129,31 @@ classDiagram
     CafeSystem --> Product : contains
     Order --> Product : maps
     CafeSystem ..> DataStorage : persists via
+
 ```
 
 ## 3. Comments About the Code
-O sistema aplica pilares fundamentais da Orientação a Objetos:
-* **Polimorfismo:** A interface gráfica interage com o sistema através do contrato `CafeSystemContract`, facilitando a injeção de dependências e testes. Além disso, utilizamos polimorfismo de sobreposição (ex: `StatusCellRenderer`) para modificar o comportamento visual das tabelas.
-* **Herança:** Utilizada na extensão dos painéis visuais (`JPanel`, `JFrame`) e na criação de uma arquitetura limpa de exceções de domínio (`OutOfStockException`, `EmptyOrderException`, `InvalidPaymentException`).
-* **Encapsulamento:** Entidades protegem seu estado interno. Identificadores são imutáveis e modificações no carrinho (`Order`) ocorrem apenas via métodos controlados para garantir cálculos financeiros exatos.
+
+The system applies fundamental pillars of Object-Oriented Programming:
+
+* **Polymorphism:** The graphical interface interacts with the system through the `CafeSystemContract` interface, facilitating dependency injection and testing. Furthermore, we used overriding polymorphism (e.g., `StatusCellRenderer`) to modify the visual behavior of the tables.
+* **Inheritance:** Used in extending visual panels (`JPanel`, `JFrame`) and in creating a clean domain exception architecture (`OutOfStockException`, `EmptyOrderException`, `InvalidPaymentException`).
+* **Encapsulation:** Entities protect their internal state. Identifiers are immutable, and modifications to the cart (`Order`) occur only via controlled methods to ensure exact financial calculations.
 
 ## 4. Test Plan
-O plano de qualidade focou em validar as regras de negócio críticas usando testes unitários automatizados. Utilizando a biblioteca **JUnit 5**, desenvolvemos 20 casos de teste que cobrem:
-1. Adição e remoção de itens com recálculo matemático de taxas.
-2. Tratamento de exceções por quebra de estoque ou de pagamentos.
-3. Isolamento do banco de dados (inserção de flag `testMode` para que os testes rodem em arquivos paralelos, protegendo o banco oficial).
+
+The quality plan focused on validating critical business rules using automated unit tests. Using the **JUnit 5** library, we developed 20 test cases that cover:
+
+1. Adding and removing items with mathematical recalculation of taxes.
+2. Exception handling for out-of-stock items or payment errors.
+3. Database isolation (insertion of a `testMode` flag so tests run on parallel files, protecting the official database).
 
 ## 5. Test Results
-Todos os 20 cenários de teste unitários foram executados com sucesso (100% de aprovação) no *Test Runner* do JUnit, assegurando que o sistema é resiliente a inputs inesperados.
 
-**Log de Saída Real da Execução Técnica (JUnit Output Panel):**
+All 20 unit test scenarios were successfully executed (100% pass rate) in the *Test Runner* of JUnit, ensuring the system is resilient to unexpected inputs.
+
+**Real Output Log of Technical Execution (JUnit Output Panel):**
+
 ```text
 %TESTC  20 v2
 %TSTTREE2,test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest,true,20,false,1,CafeSystemTest,,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]
@@ -213,51 +223,59 @@ Todos os 20 cenários de teste unitários foram executados com sucesso (100% de 
 [  20 tests successful      ]
 [   0 tests failed          ]
 BUILD SUCCESSFUL
+
 ```
 
 ## 6. Build Procedures
-Instruções sequenciais para instalação e execução do sistema em qualquer ambiente local limpo. Exige **Java JDK 8 ou superior**.
 
-**Passo 1: Clonar o repositório**
+Sequential instructions for installing and running the system in any clean local environment. Requires **Java JDK 8 or higher**.
+
+**Step 1: Clone the repository**
+
 ```bash
 git clone [https://github.com/Natancf/Java-Cafe-System.git](https://github.com/Natancf/Java-Cafe-System.git)
 cd Java-Cafe-System
 
+
 ```
 
-**Passo 2: Preparar o ambiente local**
-Crie as pastas necessárias para o armazenamento de imagens. Os arquivos de banco de dados (`.csv`) serão criados automaticamente pelo programa.
+**Step 2: Prepare the local environment**
+Create the necessary folders for storing images. The database files (`.csv`) will be created automatically by the program.
 
 ```bash
 mkdir -p data/product_images
 mkdir -p bin
 
+
 ```
 
-**Passo 3: Compilar o código**
-A partir da raiz do projeto, execute o comando apontando para a estrutura de pacotes:
+**Step 3: Compile the code**
+From the root of the project, execute the command pointing to the package structure:
 
 ```bash
 javac -d bin -sourcepath src src/main/java/br/usp/icmc/scc0204/javacafe/Main.java
 
+
 ```
 
-**Passo 4: Executar a aplicação**
+**Step 4: Run the application**
 
 ```bash
 java -cp bin main.java.br.usp.icmc.scc0204.javacafe.Main
+
 
 ```
 
 ## 7. Problems
 
-O principal problema técnico enfrentado ocorreu durante a integração do JUnit com a persistência local. O método `@BeforeEach` dos testes estava injetando dados falsos nos arquivos `.csv` reais do projeto.
-**Solução:** Implementamos o método estático `DataStorage.setTestMode(boolean)` para desviar a gravação dos testes para arquivos paralelos (`test_estoque.csv`), que são sumariamente excluídos via `@AfterAll` no fim da execução, protegendo a integridade do banco principal.
+The main technical problem faced occurred during the integration of JUnit with local persistence. The `@BeforeEach` method of the tests was injecting fake data into the project's actual `.csv` files.
+**Solution:** We implemented the static method `DataStorage.setTestMode(boolean)` to redirect test recordings to parallel files (`test_estoque.csv`), which are summarily deleted via `@AfterAll` at the end of the execution, protecting the integrity of the main database.
 
 ## 8. Comments
 
-A documentação completa das classes e interfaces do sistema foi gerada utilizando a ferramenta **JavaDoc**. Acesse a documentação técnica interativa hospedada diretamente neste repositório.
+The complete documentation for the system's classes and interfaces was generated using the **JavaDoc** tool. Access the interactive technical documentation hosted directly in this repository.
 
 ```
 https://natancf.github.io/Java-Cafe-System/
+
 ```
