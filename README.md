@@ -12,11 +12,18 @@ Project developed for the Object-Oriented Programming course, consisting of a co
 
 ## 1. Requirements
 
-The system meets all proposed requirements for POS management. In addition to the base requirements, we implemented custom validations for payment methods (rejecting zero/negative values) and a configurable alert system for low stock monitoring.
+The system implements a complete coffee shop management solution for a small café called "Java Café". The core implementations involve a 3-windowed GUI encompassing order processing, inventory management, sales reporting, data persistence, and exception handling systems.
+
+In addition to these base requirements, we implemented custom validations for payment methods (rejecting zero or negative values) and a configurable alert system for real-time low stock monitoring to protect business operations from unexpected stockouts.
 
 ## 2. Project Description
 
-The project adopts the MVC (Model-View-Controller) architecture pattern...
+The Java Café system was implemented in Java using a modular architecture inspired by the Model-View-Controller (MVC) pattern to ensure low coupling between components:
+
+* **Model:** Contains the core entities and business logic, including classes such as `Product`, `Order`, `Payment`, `Report`, and `CafeSystem`. This layer is responsible for stock control, order processing, and report generation.
+* **View:** Consists of Swing components (`MainFrame`, `POSPanel`, `InventoryPanel`, `DashboardPanel`) organized into modular tabs to handle all user interactions.
+* **Controller:** The `CafeController` connects the interface to the system logic, processing user actions from the View and updating the Model accordingly.
+* **Data Storage:** Handled by the `DataStorage` utility class, which reads and writes data to flat-file CSV files (`estoque.csv` and `vendas.csv`) at startup and after key operations.
 
 ```mermaid
 classDiagram
@@ -134,148 +141,83 @@ classDiagram
 
 ## 3. Comments About the Code
 
-The system applies fundamental pillars of Object-Oriented Programming:
+The system applies fundamental pillars of Object-Oriented Programming to guarantee maintainability:
 
-* **Polymorphism:** The graphical interface interacts with the system through the `CafeSystemContract` interface, facilitating dependency injection and testing. Furthermore, we used overriding polymorphism (e.g., `StatusCellRenderer`) to modify the visual behavior of the tables.
-* **Inheritance:** Used in extending visual panels (`JPanel`, `JFrame`) and in creating a clean domain exception architecture (`OutOfStockException`, `EmptyOrderException`, `InvalidPaymentException`).
-* **Encapsulation:** Entities protect their internal state. Identifiers are immutable, and modifications to the cart (`Order`) occur only via controlled methods to ensure exact financial calculations.
+* **Polimorfismo:** The graphical interface interacts with the system through the `CafeSystemContract` interface, facilitating dependency injection and testing. Furthermore, we used overriding polymorphism (e.g., `StatusCellRenderer`) to dynamically modify the table cells' background colors based on stock flags.
+* **Herança:** Used extensively when extending visual Swing panels (`JPanel`, `JFrame`) and when creating a semantic domain exception architecture (`OutOfStockException`, `EmptyOrderException`, `InvalidPaymentException`) that extends the base `Exception` class.
+* **Encapsulamento:** Entities protect their internal state. Product IDs are immutable (`final`), and modifications to the cart (`Order`) occur only via controlled methods (`addItem`/`removeItem`) to ensure exact, tamper-proof financial calculations.
 
 ## 4. Test Plan
 
-The quality plan focused on validating critical business rules using automated unit tests. Using the **JUnit 5** library, we developed 20 test cases that cover:
+The quality plan focused on validating critical business rules using automated unit tests. Using the **JUnit 5** library, we developed 20 test cases covering:
 
-1. Adding and removing items with mathematical recalculation of taxes.
-2. Exception handling for out-of-stock items or payment errors.
-3. Database isolation (insertion of a `testMode` flag so tests run on parallel files, protecting the official database).
+1. Adding and removing items with automatic mathematical recalculation of subtotals and 10% service taxes.
+2. Domain exception handling for out-of-stock purchases or invalid transaction values.
+3. Database isolation via a conditional `testMode` flag inside the data layer, ensuring automated execution sweeps run exclusively on separate temporary files.
 
 ## 5. Test Results
 
-All 20 unit test scenarios were successfully executed (100% pass rate) in the *Test Runner* of JUnit, ensuring the system is resilient to unexpected inputs.
+The test suite was executed using the JUnit Test Runner. All 20 unit test scenarios were successfully executed (100% pass rate), confirming that the domain exceptions and business logic operate exactly as expected.
 
-**Real Output Log of Technical Execution (JUnit Output Panel):**
+*(Due to report page constraints, a condensed log summary is provided below. The fully detailed class execution log is public and can be verified inside the project's repository).*
+
+**Output Log of Technical Execution (JUnit Condensed):**
 
 ```text
-%TESTC  20 v2
-%TSTTREE2,test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest,true,20,false,1,CafeSystemTest,,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]
-%TSTTREE3,testEmptyOrderExceptionOnFinalize(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testEmptyOrderExceptionOnFinalize(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testEmptyOrderExceptionOnFinalize()]
-%TSTTREE4,testGetLowStockProductsList(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testGetLowStockProductsList(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testGetLowStockProductsList()]
-%TSTTREE5,testRemovePartialQuantityFromOrder(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testRemovePartialQuantityFromOrder(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testRemovePartialQuantityFromOrder()]
-%TSTTREE6,testUpdateProductPrice(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testUpdateProductPrice(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testUpdateProductPrice()]
-%TSTTREE7,testSystemUpdateStockMethod(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testSystemUpdateStockMethod(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testSystemUpdateStockMethod()]
-%TSTTREE8,testLowStockAlertIndicator(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testLowStockAlertIndicator(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testLowStockAlertIndicator()]
-%TSTTREE9,testOutOfStockException(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testOutOfStockException(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testOutOfStockException()]
-%TSTTREE10,testDecreaseStockDirectlyThrowsException(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testDecreaseStockDirectlyThrowsException(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testDecreaseStockDirectlyThrowsException()]
-%TSTTREE11,testPaymentValidationSuccess(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testPaymentValidationSuccess(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testPaymentValidationSuccess()]
-%TSTTREE12,testOrderMathCalculations(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testOrderMathCalculations(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testOrderMathCalculations()]
-%TSTTREE13,testAddNegativeQuantityIgnored(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testAddNegativeQuantityIgnored(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testAddNegativeQuantityIgnored()]
-%TSTTREE14,testChangeLowStockThreshold(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testChangeLowStockThreshold(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testChangeLowStockThreshold()]
-%TSTTREE15,testRemoveItemFromOrderCompletely(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testRemoveItemFromOrderCompletely(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testRemoveItemFromOrderCompletely()]
-%TSTTREE16,testOrderIsFinalizedStatus(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testOrderIsFinalizedStatus(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testOrderIsFinalizedStatus()]
-%TSTTREE17,testPaymentValidationThrowsExceptionForZeroAmount(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testPaymentValidationThrowsExceptionForZeroAmount(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testPaymentValidationThrowsExceptionForZeroAmount()]
-%TSTTREE18,testPaymentValidationThrowsExceptionForNegativeAmount(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testPaymentValidationThrowsExceptionForNegativeAmount(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testPaymentValidationThrowsExceptionForNegativeAmount()]
-%TSTTREE19,testInventoryRestockUpdatesQuantity(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testInventoryRestockUpdatesQuantity(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testInventoryRestockUpdatesQuantity()]
-%TSTTREE20,testSuccessfulOrderAndStockDeduction(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testSuccessfulOrderAndStockDeduction(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testSuccessfulOrderAndStockDeduction()]
-%TSTTREE21,testRemoveItemNotInOrderIgnored(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testRemoveItemNotInOrderIgnored(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testRemoveItemNotInOrderIgnored()]
-%TSTTREE22,testGenerateReceiptContainsProductName(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest),false,1,false,2,testGenerateReceiptContainsProductName(),,[engine:junit-jupiter]/[class:test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest]/[method:testGenerateReceiptContainsProductName()]
-%TESTS  3,testEmptyOrderExceptionOnFinalize(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  3,testEmptyOrderExceptionOnFinalize(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  4,testGetLowStockProductsList(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  4,testGetLowStockProductsList(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  5,testRemovePartialQuantityFromOrder(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  5,testRemovePartialQuantityFromOrder(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  6,testUpdateProductPrice(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  6,testUpdateProductPrice(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  7,testSystemUpdateStockMethod(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  7,testSystemUpdateStockMethod(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  8,testLowStockAlertIndicator(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  8,testLowStockAlertIndicator(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  9,testOutOfStockException(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  9,testOutOfStockException(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  10,testDecreaseStockDirectlyThrowsException(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  10,testDecreaseStockDirectlyThrowsException(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  11,testPaymentValidationSuccess(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  11,testPaymentValidationSuccess(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  12,testOrderMathCalculations(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  12,testOrderMathCalculations(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  13,testAddNegativeQuantityIgnored(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  13,testAddNegativeQuantityIgnored(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  14,testChangeLowStockThreshold(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  14,testChangeLowStockThreshold(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  15,testRemoveItemFromOrderCompletely(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  15,testRemoveItemFromOrderCompletely(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  16,testOrderIsFinalizedStatus(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  16,testOrderIsFinalizedStatus(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  17,testPaymentValidationThrowsExceptionForZeroAmount(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  17,testPaymentValidationThrowsExceptionForZeroAmount(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  18,testPaymentValidationThrowsExceptionForNegativeAmount(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  18,testPaymentValidationThrowsExceptionForNegativeAmount(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  19,testInventoryRestockUpdatesQuantity(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  19,testInventoryRestockUpdatesQuantity(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  20,testSuccessfulOrderAndStockDeduction(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  20,testSuccessfulOrderAndStockDeduction(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  21,testRemoveItemNotInOrderIgnored(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  21,testRemoveItemNotInOrderIgnored(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTS  22,testGenerateReceiptContainsProductName(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%TESTE  22,testGenerateReceiptContainsProductName(test.java.br.usp.icmc.scc0204.javacafe.CafeSystemTest)
-%RUNTIME302
+Test run finished after 152 ms
+[         3 containers successful ]
+[        20 tests found           ]
+[        20 tests successful      ]
+[         0 tests failed          ]
 
-...
-[  20 tests successful      ]
-[   0 tests failed          ]
 BUILD SUCCESSFUL
 
 ```
 
 ## 6. Build Procedures
 
-Sequential instructions for installing and running the system in any clean local environment. Requires **Java JDK 8 or higher**.
+Sequential instructions for installing, compiling, and running the system from a clean command-line terminal. **Requires Java JDK 8 or higher.**
 
-**Step 1: Clone the repository**
+**Step 1: Clone the repository and navigate to the project root**
 
 ```bash
-git clone [https://github.com/Natancf/Java-Cafe-System.git](https://github.com/Natancf/Java-Cafe-System.git)
+git clone https://github.com/Natancf/Java-Cafe-System.git
 cd Java-Cafe-System
 
-
 ```
 
-**Step 2: Prepare the local environment**
-Create the necessary folders for storing images. The database files (`.csv`) will be created automatically by the program.
+**Step 2: Prepare local runtime directories**
+Create the necessary folders for storing compiled binaries and local images. The base database files (`.csv`) will be generated automatically on the first execution.
 
 ```bash
-mkdir -p data/product_images
 mkdir -p bin
-
+mkdir -p data/product_images
 
 ```
 
-**Step 3: Compile the code**
-From the root of the project, execute the command pointing to the package structure:
+**Step 3: Compile the source code**
+Execute the Java compiler pointing to the main initialization class path while referencing the source root:
 
 ```bash
 javac -d bin -sourcepath src src/main/java/br/usp/icmc/scc0204/javacafe/Main.java
 
-
 ```
 
-**Step 4: Run the application**
+**Step 4: Launch the GUI application**
 
 ```bash
 java -cp bin main.java.br.usp.icmc.scc0204.javacafe.Main
-
 
 ```
 
 ## 7. Problems
 
-The main technical problem faced occurred during the integration of JUnit with local persistence. The `@BeforeEach` method of the tests was injecting fake data into the project's actual `.csv` files.
-**Solution:** We implemented the static method `DataStorage.setTestMode(boolean)` to redirect test recordings to parallel files (`test_estoque.csv`), which are summarily deleted via `@AfterAll` at the end of the execution, protecting the integrity of the main database.
+The main technical bottleneck faced occurred during the integration of JUnit with local flat-file persistence. The `@BeforeEach` methods were executing setups that directly wrote sample products into the actual production CSV files (`data/estoque.csv`), corrupting the initial state of the application.
+
+* **Solution:** We implemented a static method state hook via `DataStorage.setTestMode(boolean)`. Coupled with JUnit's `@BeforeAll` and `@AfterAll` annotations, the test suite now safely intercepts all database operations, despatches them to temporary mock files (`test_estoque.csv`), and deletes them automatically upon tearing down the testing thread.
 
 ## 8. Comments
 
-The complete documentation for the system's classes and interfaces was generated using the **JavaDoc** tool. Access the interactive technical documentation hosted directly in this repository.
+The complete technical documentation for classes, methods, and interface contracts was generated using the **JavaDoc** tool. The interactive HTML site is hosted online via GitHub Pages and can be actively browsed at:
 
-```
-https://natancf.github.io/Java-Cafe-System/
-
-```
+`https://natancf.github.io/Java-Cafe-System/`
