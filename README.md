@@ -4,9 +4,9 @@ Project developed for the Object-Oriented Programming course, consisting of a co
 
 ### 👥 Group Identification
 
-* **Davi Azevedo Guedes de Sá**
-* **Natanael Costa de Freitas**
-* **Pietro Gutiérrez García-Urrutia**
+* **Davi Azevedo Guedes de Sá** - NUSP 16861585
+* **Natanael Costa de Freitas** - NUSP 16894216
+* **Pietro Gutiérrez García-Urrutia** - NUSP 17024248
 
 ---
 
