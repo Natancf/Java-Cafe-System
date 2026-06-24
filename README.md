@@ -138,6 +138,28 @@ classDiagram
     CafeSystem ..> DataStorage : persists via
 
 ```
+### 📂 Directory Structure
+
+The repository is organized following standard Java project conventions, with a clear separation between the MVC layers, automated tests, and runtime data.
+
+```text
+Java-Cafe-System/
+├── src/
+│   ├── main/java/br/usp/icmc/scc0204/javacafe/
+│   │   ├── Main.java                 # Application entry point
+│   │   ├── model/                    # Entities, exceptions, and business logic (Product, Order)
+│   │   ├── view/                     # Swing GUI components (MainFrame, POSPanel, etc.)
+│   │   ├── controller/               # MVC Controllers (CafeController)
+│   │   └── util/                     # Infrastructure and utilities (DataStorage.java)
+│   └── test/java/br/usp/icmc/scc0204/javacafe/
+│       └── model/                    # JUnit 5 automated test cases
+├── data/                             # Generated at runtime
+│   ├── product_images/               # Local image assets for the GUI
+│   ├── estoque.csv                   # Inventory flat-file persistence
+│   └── vendas.csv                    # Sales records and reports
+├── bin/                              # Compiled .class binaries (generated after build)
+└── README.md                         # Project documentation
+```
 
 ## 3. Comments About the Code
 
